@@ -1,0 +1,35 @@
+name: 사이트 배포
+
+# 코드나 화면을 고치면(main에 push) 사이트를 다시 배포합니다. (자동 수집은 collect.yml에서 배포)
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: 새 버전이 바로 보이도록 (브라우저 캐시 무효화)
+        run: |
+          V=${GITHUB_SHA::7}
+          sed -i -E "s#assets/js/app\.js\"#assets/js/app.js?v=$V\"#; s#assets/css/style\.css\"#assets/css/style.css?v=$V\"#" index.html
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,4 @@
+requests>=2.31
+google-auth>=2.29
+pytrends>=4.9
+pandas>=2.0
