@@ -5,6 +5,13 @@
 - 사이트: https://euneun0503.github.io/google_news-insight/
 - 네이버 버전: https://euneun0503.github.io/news-insight/
 
+## 접근 제한
+
+- **검색 노출 차단**: `robots.txt`(모든 검색엔진 차단)와 페이지의 `noindex` 설정이 들어 있어요.
+- **입장 비밀번호**: 사이트를 열면 비밀번호 화면이 먼저 나와요. 비밀번호 자체는 저장하지 않고 해시값만 `assets/js/config.js`에 있어요.
+  - 비밀번호 바꾸기: 터미널에서 `echo -n "google_news-insight:새비밀번호" | shasum -a 256` 결과를 `PASSWORD_SHA256`에 넣고 커밋하세요.
+- **주의**: 저장소가 공개(Public)면 `data/` 폴더는 비밀번호 없이도 열 수 있어요. 데이터까지 막으려면 저장소를 비공개(Private)로 바꾸세요(비공개 저장소의 Pages는 GitHub Pro 이상 필요).
+
 ## 메뉴
 
 | 메뉴 | 내용 | 데이터 |

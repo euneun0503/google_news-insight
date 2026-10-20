@@ -3,14 +3,28 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+  <meta name="googlebot" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
   <title>구글 인사이트</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23e11d2e'/><text x='16' y='23' font-size='19' font-family='Arial' font-weight='700' text-anchor='middle' fill='%23ffffff'>G</text></svg>">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
   <link rel="stylesheet" href="assets/css/style.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js" defer></script>
+  <script src="assets/js/config.js"></script>
   <script src="assets/js/app.js" defer></script>
 </head>
-<body>
+<body class="locked">
+  <div class="gate" id="gate">
+    <form class="gate-box" id="gateForm" autocomplete="off">
+      <div class="gate-brand"><span class="brand-mark">G</span><b>구글 인사이트</b></div>
+      <p>헬스조선 내부용 통계 사이트예요.<br>비밀번호를 입력하세요.</p>
+      <input type="password" id="gatePw" placeholder="비밀번호" aria-label="비밀번호" autofocus>
+      <label class="gate-keep"><input type="checkbox" id="gateKeep" checked> 이 기기에서 30일 동안 기억</label>
+      <button class="btn primary" type="submit">입장</button>
+      <div class="gate-err" id="gateErr" hidden>비밀번호가 맞지 않아요</div>
+    </form>
+  </div>
   <header class="topbar">
     <button class="menu-btn" id="menuBtn" aria-label="메뉴">☰</button>
     <a class="brand" href="#/dashboard">

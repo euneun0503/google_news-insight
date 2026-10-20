@@ -36,10 +36,16 @@ jobs:
           cache: pip
           cache-dependency-path: collector/requirements.txt
       - run: pip install -r collector/requirements.txt
+      - name: 비밀번호 확인
+        env:
+          SITE_PASSWORD: ${{ secrets.SITE_PASSWORD }}
+        run: |
+          if [ -z "$SITE_PASSWORD" ]; then echo "::error::SITE_PASSWORD 비밀값이 없어요. 데이터를 평문으로 올리지 않도록 수집을 멈춥니다."; exit 1; fi
       - name: 수집
         env:
           GOOGLE_SA_JSON: ${{ secrets.GOOGLE_SA_JSON }}
           GA4_PROPERTY_ID: ${{ secrets.GA4_PROPERTY_ID }}
+          SITE_PASSWORD: ${{ secrets.SITE_PASSWORD }}
         run: python collector/collect.py "${{ github.event.inputs.what || 'auto' }}" --days "${{ github.event.inputs.days || '5' }}"
       - name: 저장
         run: |

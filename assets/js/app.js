@@ -450,7 +450,24 @@
   let rt;
   window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(route, 250); });
 
+  /* ---------- 입장 확인 ---------- */
+  const CFG = window.GI_CONFIG || {};
+  const sha = async (t) => [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t)))].map((b) => b.toString(16).padStart(2, '0')).join('');
+  const unlocked = () => { try { const v = JSON.parse(localStorage.getItem('gi-auth') || 'null'); return v && v.h === CFG.PASSWORD_SHA256 && v.exp > Date.now(); } catch (e) { return false; } };
+  const gate = () => new Promise((resolve) => {
+    if (!CFG.PASSWORD_SHA256 || unlocked() || sessionStorage.getItem('gi-auth') === CFG.PASSWORD_SHA256) { document.body.classList.remove('locked'); return resolve(); }
+    $('#gateForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const h = await sha((CFG.SALT || '') + $('#gatePw').value);
+      if (h !== CFG.PASSWORD_SHA256) { $('#gateErr').hidden = false; $('#gatePw').select(); return; }
+      try { if ($('#gateKeep').checked) localStorage.setItem('gi-auth', JSON.stringify({ h, exp: Date.now() + (CFG.REMEMBER_DAYS || 30) * 864e5 })); sessionStorage.setItem('gi-auth', h); } catch (er) {}
+      document.body.classList.remove('locked');
+      resolve();
+    });
+  });
+
   (async () => {
+    await gate();
     await loadBase();
     if (state.preset !== 'custom' || !state.start) [state.start, state.end] = presetRange(state.preset || '28');
     const pill = $('#statusPill');

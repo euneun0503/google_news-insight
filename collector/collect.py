@@ -16,6 +16,7 @@
 필요한 저장소 비밀값(Settings → Secrets and variables → Actions):
   GOOGLE_SA_JSON   서비스 계정 키(JSON 전체). Search Console·GA4에 이 계정 이메일을 사용자로 추가해야 함
   GA4_PROPERTY_ID  GA4 속성 ID(숫자). 없으면 GA4 단계는 건너뜀
+  SITE_PASSWORD    사이트 입장 비밀번호. data/ 파일을 이 비밀번호로 암호화해서 저장
 """
 import argparse
 import datetime as dt
@@ -53,17 +54,67 @@ def today_kst():
     return now_kst().date()
 
 
+# ---------------------------------------------------------------- 암호화
+# 저장소가 공개여도 데이터를 못 읽게, data/ 아래 JSON은 SITE_PASSWORD로 암호화해서 저장합니다.
+# 형식: {"enc":1,"iv":b64,"ct":b64}  (AES-256-GCM, 키 = PBKDF2-SHA256(비밀번호, data/key.json의 salt, 310000회))
+# 예외: data/key.json(salt), data/status.json(실행 시각) 은 평문.
+import base64
+PASSWORD = os.environ.get("SITE_PASSWORD", "")
+PLAIN = {"key.json", "status.json"}
+_key = None
+
+
+def enc_key():
+    global _key
+    if _key is not None:
+        return _key
+    if not PASSWORD:
+        _key = False
+        return _key
+    from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+    from cryptography.hazmat.primitives import hashes
+    kf = DATA / "key.json"
+    meta = json.loads(kf.read_text()) if kf.exists() else None
+    if not meta:
+        meta = {"kdf": "PBKDF2-SHA256", "iter": 310000, "salt": base64.b64encode(os.urandom(16)).decode()}
+        kf.parent.mkdir(parents=True, exist_ok=True)
+        kf.write_text(json.dumps(meta))
+    _key = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=base64.b64decode(meta["salt"]), iterations=meta["iter"]).derive(PASSWORD.encode())
+    return _key
+
+
 def load(p, default):
     try:
-        return json.loads(Path(p).read_text(encoding="utf-8"))
+        obj = json.loads(Path(p).read_text(encoding="utf-8"))
     except Exception:
         return default
+    if isinstance(obj, dict) and obj.get("enc") == 1:
+        k = enc_key()
+        if not k:
+            log("SITE_PASSWORD 없음 → 암호화된 파일을 읽을 수 없음:", p)
+            return default
+        from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+        try:
+            pt = AESGCM(k).decrypt(base64.b64decode(obj["iv"]), base64.b64decode(obj["ct"]), None)
+        except Exception:
+            log("복호화 실패(비밀번호 확인):", p)
+            return default
+        return json.loads(pt.decode("utf-8"))
+    return obj
 
 
 def save(p, obj, compact=True):
     p = Path(p)
     p.parent.mkdir(parents=True, exist_ok=True)
     txt = json.dumps(obj, ensure_ascii=False, separators=(",", ":") if compact else None, indent=None if compact else 0)
+    k = enc_key() if p.name not in PLAIN else False
+    if k:
+        from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+        iv = os.urandom(12)
+        ct = AESGCM(k).encrypt(iv, txt.encode("utf-8"), None)
+        txt = json.dumps({"enc": 1, "iv": base64.b64encode(iv).decode(), "ct": base64.b64encode(ct).decode()})
+    elif p.name not in PLAIN and not PASSWORD:
+        log("경고: SITE_PASSWORD 없음 → 평문으로 저장", p.name)
     p.write_text(txt, encoding="utf-8")
 
 
