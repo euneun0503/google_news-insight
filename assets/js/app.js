@@ -1,7 +1,7 @@
 /* 구글 인사이트 — 헬스조선 구글 통계 (정적 사이트, data/*.json을 읽어 그립니다) */
 (() => {
   'use strict';
-  const RED = '#e11d2e', INK = '#111214', MUTED = '#c9ccd3', GRID = '#eef0f3', AX = '#8a8f9c', BLUE = '#2563eb';
+  const RED = '#2563eb', INK = '#111214', MUTED = '#c9ccd3', GRID = '#eef0f3', AX = '#8a8f9c', BLUE = '#f59e0b'; // RED=포인트(블루), BLUE=하이닥(앰버)
   const OURS = '헬스조선';
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
